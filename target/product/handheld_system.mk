@@ -58,7 +58,6 @@ PRODUCT_PACKAGES += \
     Home \
     InputDevices \
     KeyChain \
-    LatinIME \
     librs_jni \
     ManagedProvisioning \
     MmsService \
