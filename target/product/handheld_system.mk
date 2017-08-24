@@ -64,7 +64,6 @@ PRODUCT_PACKAGES += \
     MtpDocumentsProvider \
     Music \
     MusicFX \
-    NfcNci \
     OneTimeInitializer \
     PacProcessor \
     PrintRecommendationService \
