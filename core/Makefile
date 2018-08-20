@@ -1348,6 +1348,9 @@ $(recovery_uncompressed_ramdisk): $(MKBOOTFS) $(ADBD) \
 		$(hide) cp $(PRODUCT_OUT)/ramdisk-recovery.cpio $(PRODUCT_OUT)/install/bin/recovery.cpio
 		@echo ----- Compressed recovery gzip ------
 		$(hide) gzip $(PRODUCT_OUT)/install/bin/recovery.cpio
+		@echo ----- Generating Changelog ------
+		$(hide) ./vendor/samsung/tools/changelog
+		$(hide) mv $(PRODUCT_OUT)/Changelog.txt $(PRODUCT_OUT)/$(LINEAGE_VERSION)-$(TARGET_PRODUCT).txt
 
 $(recovery_ramdisk): $(MINIGZIP) \
 		$(recovery_uncompressed_ramdisk)
