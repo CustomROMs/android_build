@@ -1346,6 +1346,8 @@ $(recovery_uncompressed_ramdisk): $(MKBOOTFS) $(ADBD) \
 		$(hide) $(MKBOOTFS) $(TARGET_RECOVERY_ROOT_OUT) > $@
 		@echo ----- Copy uncompressed recovery ------
 		$(hide) cp $(PRODUCT_OUT)/ramdisk-recovery.cpio $(PRODUCT_OUT)/install/bin/recovery.cpio
+		@echo ----- Compressed recovery gzip ------
+		$(hide) gzip $(PRODUCT_OUT)/install/bin/recovery.cpio
 
 $(recovery_ramdisk): $(MINIGZIP) \
 		$(recovery_uncompressed_ramdisk)
