@@ -1347,7 +1347,9 @@ $(recovery_uncompressed_ramdisk): $(MKBOOTFS) $(ADBD) \
 		@echo ----- Copy uncompressed recovery ------
 		$(hide) cp $(PRODUCT_OUT)/ramdisk-recovery.cpio $(PRODUCT_OUT)/install/bin/recovery.cpio
 		@echo ----- Compressed recovery gzip ------
-		$(hide) gzip $(PRODUCT_OUT)/install/bin/recovery.cpio
+		mkdir -p $(PRODUCT_OUT)/install/codina
+		mkdir -p $(PRODUCT_OUT)/install/janice
+		$(hide) gzip -f $(PRODUCT_OUT)/install/bin/recovery.cpio
 		@echo ----- Generating Changelog ------
 		$(hide) ./vendor/samsung/tools/changelog
 		$(hide) mv $(PRODUCT_OUT)/Changelog.txt $(PRODUCT_OUT)/$(LINEAGE_VERSION)-$(TARGET_PRODUCT).txt

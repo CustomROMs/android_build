@@ -18,6 +18,7 @@
 
 # Set lowram options
 PRODUCT_PROPERTY_OVERRIDES += \
+     ro.config.low_ram1=false \
      ro.lmk.critical_upgrade=true \
      ro.lmk.upgrade_pressure=40
 
@@ -47,5 +48,5 @@ PRODUCT_DEX_PREOPT_BOOT_IMAGE_PROFILE_LOCATION := frameworks/base/config/boot-im
 # Some notable apps that will be affected by this are gms and chrome.
 # b/65591595.
 PRODUCT_PROPERTY_OVERRIDES += \
-     pm.dexopt.shared=quicken
+     pm.dexopt.shared=speed
 
