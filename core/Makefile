@@ -693,23 +693,11 @@ INTERNAL_RAMDISK_FILES := $(filter $(TARGET_ROOT_OUT)/%, \
 	$(ALL_GENERATED_SOURCES) \
 	$(ALL_DEFAULT_INSTALLED_MODULES))
 
-INSTALLED_FILES_FILE_ROOT := $(PRODUCT_OUT)/installed-files-root.txt
-INSTALLED_FILES_JSON_ROOT := $(INSTALLED_FILES_FILE_ROOT:.txt=.json)
-$(INSTALLED_FILES_FILE_ROOT): .KATI_IMPLICIT_OUTPUTS := $(INSTALLED_FILES_JSON_ROOT)
-$(INSTALLED_FILES_FILE_ROOT) : $(INTERNAL_RAMDISK_FILES) $(FILESLIST)
-	@echo Installed file list: $@
-	@mkdir -p $(dir $@)
-	@rm -f $@
-	$(hide) $(FILESLIST) $(TARGET_ROOT_OUT) > $(@:.txt=.json)
-	$(hide) build/make/tools/fileslist_util.py -c $(@:.txt=.json) > $@
-
-$(call dist-for-goals, sdk win_sdk sdk_addon, $(INSTALLED_FILES_FILE_ROOT))
-
 BUILT_RAMDISK_TARGET := $(PRODUCT_OUT)/ramdisk.img
 
 # We just build this directly to the install location.
 INSTALLED_RAMDISK_TARGET := $(BUILT_RAMDISK_TARGET)
-$(INSTALLED_RAMDISK_TARGET): $(MKBOOTFS) $(INTERNAL_RAMDISK_FILES) $(INSTALLED_FILES_FILE_ROOT) | $(MINIGZIP)
+$(INSTALLED_RAMDISK_TARGET): $(MKBOOTFS) $(INTERNAL_RAMDISK_FILES) | $(MINIGZIP)
 	$(call pretty,"Target ram disk: $@")
 	$(hide) $(MKBOOTFS) -d $(TARGET_OUT) $(TARGET_ROOT_OUT) | $(BOOT_RAMDISK_COMPRESSOR) > $@
 
@@ -770,6 +758,10 @@ ifeq ($(BOARD_USES_RECOVERY_AS_BOOT),true)
 ifneq ($(BOARD_BUILD_SYSTEM_ROOT_IMAGE),true)
   $(error BOARD_BUILD_SYSTEM_ROOT_IMAGE must be enabled for BOARD_USES_RECOVERY_AS_BOOT.)
 endif
+endif
+
+ifndef BOARD_CUSTOM_BOOTIMG_MK
+$(error BOARD_CUSTOM_BOOTIMG_MK must be defined)
 endif
 
 # We build recovery as boot image if BOARD_USES_RECOVERY_AS_BOOT is true.
@@ -1440,6 +1432,8 @@ define build-recoveryramdisk
   # Copying baseline ramdisk...
   # Use rsync because "cp -Rf" fails to overwrite broken symlinks on Mac.
   $(hide) rsync -a --exclude=etc --exclude=sdcard --exclude=vendor $(IGNORE_RECOVERY_SEPOLICY) $(IGNORE_CACHE_LINK) $(TARGET_ROOT_OUT) $(TARGET_RECOVERY_OUT)
+  # Copy adbd from system/bin to recovery/root/sbin
+  $(hide) cp -f $(TARGET_OUT_EXECUTABLES)/adbd $(TARGET_RECOVERY_ROOT_OUT)/sbin/adbd
   # Modifying ramdisk contents...
   $(if $(BOARD_RECOVERY_KERNEL_MODULES), \
     $(call build-image-kernel-modules,$(BOARD_RECOVERY_KERNEL_MODULES),$(TARGET_RECOVERY_ROOT_OUT),,$(call intermediates-dir-for,PACKAGING,depmod_recovery)))
@@ -1471,7 +1465,10 @@ define build-recoveryramdisk
   $(hide) sed -i 's/persist.sys.usb.config=none/persist.sys.usb.config=adb/g' $(TARGET_RECOVERY_ROOT_OUT)/prop.default
   $(hide) ln -sf prop.default $(TARGET_RECOVERY_ROOT_OUT)/default.prop
   $(BOARD_RECOVERY_IMAGE_PREPARE)
-  $(hide) $(MKBOOTFS) -d $(TARGET_OUT) $(TARGET_RECOVERY_ROOT_OUT) | $(MINIGZIP) > $(recovery_ramdisk)
+  $(if $(filter true,$(BOARD_BUILD_SYSTEM_ROOT_IMAGE)), \
+    $(hide) mkdir -p $(TARGET_RECOVERY_ROOT_OUT)/system_root; \
+            rm -rf $(TARGET_RECOVERY_ROOT_OUT)/system; \
+            ln -sf /system_root/system $(TARGET_RECOVERY_ROOT_OUT)/system) # Mount the system_root_image to /system_root and symlink /system.
 endef
 
 RECOVERYIMAGE_ID_FILE := $(PRODUCT_OUT)/recovery.id
@@ -1497,6 +1494,8 @@ define build-recoveryimage-target
       $(hide) $(AVBTOOL) add_hash_footer --image $(1) --partition_size $(BOARD_RECOVERYIMAGE_PARTITION_SIZE) --partition_name recovery $(INTERNAL_AVB_RECOVERY_SIGNING_ARGS) $(BOARD_AVB_RECOVERY_ADD_HASH_FOOTER_ARGS)))
 endef
 
+ADBD := $(TARGET_OUT_EXECUTABLES)/adbd
+
 ifeq ($(BOARD_USES_RECOVERY_AS_BOOT),true)
 ifeq (true,$(PRODUCTS.$(INTERNAL_PRODUCT).PRODUCT_SUPPORTS_BOOT_SIGNER))
 $(INSTALLED_BOOTIMAGE_TARGET) : $(BOOT_SIGNER)
@@ -1507,7 +1506,7 @@ endif
 ifeq (true,$(BOARD_AVB_ENABLE))
 $(INSTALLED_BOOTIMAGE_TARGET) : $(AVBTOOL) $(BOARD_AVB_BOOT_KEY_PATH)
 endif
-$(INSTALLED_BOOTIMAGE_TARGET): $(MKBOOTFS) $(MKBOOTIMG) $(MINIGZIP) \
+$(INSTALLED_BOOTIMAGE_TARGET): $(MKBOOTFS) $(MKBOOTIMG) $(MINIGZIP) $(ADBD) \
 		$(INSTALLED_RAMDISK_TARGET) \
 		$(INTERNAL_RECOVERYIMAGE_FILES) \
 		$(recovery_initrc) $(recovery_sepolicy) $(recovery_kernel) \
