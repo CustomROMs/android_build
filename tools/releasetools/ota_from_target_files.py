@@ -1133,9 +1133,7 @@ else if get_stage("%(bcb_dev)s") == "3/3" then
     script.FormatPartition("/system")
     recovery_mount_options = "ext4=max_batch_time=0,commit=1,data=ordered,barrier=1,errors=panic,nodelalloc"
     script.Mount("/system", recovery_mount_options)
-    if not has_recovery_patch:
-      script.UnpackPackageDir("recovery", "/system")
-      script.UnpackPackageDir("system", "/system")
+    script.UnpackPackageDir("system", "/system")
 
     symlinks = CopyPartitionFiles(system_items, input_zip, output_zip)
     script.MakeSymlinks(symlinks)
