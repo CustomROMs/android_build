@@ -274,8 +274,8 @@ ifeq (,$(filter --compiler-filter=%, $(LOCAL_DEX_PREOPT_FLAGS)))
       LOCAL_DEX_PREOPT_FLAGS += --compiler-filter=speed
     else
       ifeq (true,$(my_process_profile))
-        # For non system server jars, use speed-profile when we have a profile.
-        LOCAL_DEX_PREOPT_FLAGS += --compiler-filter=speed-profile
+        # For non system server jars, use space-profile when we have a profile.
+        LOCAL_DEX_PREOPT_FLAGS += --compiler-filter=space-profile
       else
         LOCAL_DEX_PREOPT_FLAGS += --compiler-filter=$(my_default_compiler_filter)
       endif
