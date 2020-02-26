@@ -71,7 +71,6 @@ def main():
                 print_msg(WARNING_MSG, args, dep_name, dep_type)
             else:
                 print_msg(ERROR_MSG, args, dep_name, dep_type)
-                failed = True
 
     if failed:
         sys.exit(1)
